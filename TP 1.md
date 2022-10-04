@@ -16,17 +16,17 @@ Carte Ethernet Ethernet, 08-8F-C3-36-61-47, pas d'adresse IP
 ```
 
 **🌞 Affichez votre gateway**
-
+```
 ipconfig /all
-
+```
 ```
 Passerelle par défaut. . . . . . . . . : 10.33.19.254
 ```
 
 **🌞 Déterminer la MAC de la passerelle**
-
+```
 arp -a
-
+```
 ```
 00-c0-e7-e0-04-4e
 ```
