@@ -55,8 +55,6 @@ si l'adresse ip choisie existe déjà, on perd l'accès à internet
 
 # II. Exploration locale en duo
 
-
-
 ## 3. Modification d'adresse IP
 
 🌞 **Modifiez l'IP des deux machines pour qu'elles soient dans le même réseau**
@@ -95,157 +93,116 @@ Interface : 10.33.19.192 --- 0xb
 
 ## 4. Utilisation d'un des deux comme gateway
 
-Ca, ça peut toujours dépann irl. Comme pour donner internet à une tour sans WiFi quand y'a un PC portable à côté, par exemple.
-
-L'idée est la suivante :
-
-- vos PCs ont deux cartes avec des adresses IP actuellement
-  - la carte WiFi, elle permet notamment d'aller sur internet, grâce au réseau YNOV
-  - la carte Ethernet, qui permet actuellement de joindre votre coéquipier, grâce au réseau que vous avez créé :)
-- si on fait un tit schéma tout moche, ça donne ça :
-
-```schema
-  Internet           Internet
-     |                   |
-    WiFi                WiFi
-     |                   |
-    PC 1 ---Ethernet--- PC 2
-    
-- internet joignable en direct par le PC 1
-- internet joignable en direct par le PC 2
-```
-
-- vous allez désactiver Internet sur une des deux machines, et vous servir de l'autre machine pour accéder à internet.
-
-```schema
-  Internet           Internet
-     X                   |
-     X                  WiFi
-     |                   |
-    PC 1 ---Ethernet--- PC 2
-    
-- internet joignable en direct par le PC 2
-- internet joignable par le PC 1, en passant par le PC 2
-```
-
-- pour ce faiiiiiire :
-  - désactivez l'interface WiFi sur l'un des deux postes
-  - s'assurer de la bonne connectivité entre les deux PCs à travers le câble RJ45
-  - **sur le PC qui n'a plus internet**
-    - sur la carte Ethernet, définir comme passerelle l'adresse IP de l'autre PC
-  - **sur le PC qui a toujours internet**
-    - sur Windows, il y a une option faite exprès (google it. "share internet connection windows 10" par exemple)
-    - sur GNU/Linux, faites le en ligne de commande ou utilisez [Network Manager](https://help.ubuntu.com/community/Internet/ConnectionSharing) (souvent présent sur tous les GNU/Linux communs)
-    - sur MacOS : toute façon vous avez pas de ports RJ, si ? :o (google it sinon)
-
----
-
 🌞**Tester l'accès internet**
+```
+ping 1.1.1.1
 
-- pour tester la connectivité à internet on fait souvent des requêtes simples vers un serveur internet connu
-- essayez de ping l'adresse IP `1.1.1.1`, c'est un serveur connu de CloudFlare (demandez-moi si vous comprenez pas trop la démarche)
-
+Envoi d’une requête 'Ping'  1.1.1.1 avec 32 octets de données :
+Réponse de 1.1.1.1 : octets=32 temps=24 ms TTL=55
+Réponse de 1.1.1.1 : octets=32 temps=21 ms TTL=55
+Réponse de 1.1.1.1 : octets=32 temps=24 ms TTL=55
+Réponse de 1.1.1.1 : octets=32 temps=21 ms TTL=55
+```
 🌞 **Prouver que la connexion Internet passe bien par l'autre PC**
+```
+ tracert 1.1.1.1
 
-- utiliser la commande `traceroute` ou `tracert` (suivant votre OS) pour bien voir que les requêtes passent par la passerelle choisie (l'autre le PC)
+Détermination de l’itinéraire vers one.one.one.one [1.1.1.1]
+avec un maximum de 30 sauts :
 
-> La commande `traceroute` retourne la liste des machines par lesquelles passent le `ping` avant d'atteindre sa destination.
+  1     2 ms     2 ms     4 ms  10.33.19.254
+  2     3 ms     3 ms     2 ms  137.149.196.77.rev.sfr.net [77.196.149.137]
+  3    11 ms     7 ms     7 ms  108.97.30.212.rev.sfr.net [212.30.97.108]
+  4    21 ms    21 ms    18 ms  222.172.136.77.rev.sfr.net [77.136.172.222]
+  5    19 ms    20 ms    20 ms  221.172.136.77.rev.sfr.net [77.136.172.221]
+  6    22 ms    21 ms    23 ms  221.10.136.77.rev.sfr.net [77.136.10.221]
+  7    22 ms    22 ms    20 ms  221.10.136.77.rev.sfr.net [77.136.10.221]
+  8    19 ms    22 ms    26 ms  141.101.67.254
+  9    23 ms    24 ms    22 ms  172.71.132.2
+ 10    20 ms    20 ms    23 ms  one.one.one.one [1.1.1.1]
+``` 
 
 ## 5. Petit chat privé
 
-![Netcat](./pics/netcat.jpg)
-
-On va créer un chat extrêmement simpliste à l'aide de `netcat` (abrégé `nc`). Il est souvent considéré comme un bon couteau-suisse quand il s'agit de faire des choses avec le réseau.
-
-Sous GNU/Linux et MacOS vous l'avez sûrement déjà, sinon débrouillez-vous pour l'installer :). Les Windowsien, ça se passe [ici](https://eternallybored.org/misc/netcat/netcat-win32-1.11.zip) (from https://eternallybored.org/misc/netcat/).  
-
-Une fois en possession de `netcat`, vous allez pouvoir l'utiliser en ligne de commande. Comme beaucoup de commandes sous GNU/Linux, Mac et Windows, on peut utiliser l'option `-h` (`h` pour `help`) pour avoir une aide sur comment utiliser la commande.  
-
-Sur un Windows, ça donne un truc comme ça :
-
-```schema
-C:\Users\It4\Desktop\netcat-win32-1.11>nc.exe -h
-[v1.11 NT www.vulnwatch.org/netcat/]
-connect to somewhere:   nc [-options] hostname port[s] [ports] ...
-listen for inbound:     nc -l -p port [options] [hostname] [port]
-options:
-        -d              detach from console, background mode
-
-        -e prog         inbound program to exec [dangerous!!]
-        -g gateway      source-routing hop point[s], up to 8
-        -G num          source-routing pointer: 4, 8, 12, ...
-        -h              this cruft
-        -i secs         delay interval for lines sent, ports scanned
-        -l              listen mode, for inbound connects
-        -L              listen harder, re-listen on socket close
-        -n              numeric-only IP addresses, no DNS
-        -o file         hex dump of traffic
-        -p port         local port number
-        -r              randomize local and remote ports
-        -s addr         local source address
-        -t              answer TELNET negotiation
-        -u              UDP mode
-        -v              verbose [use twice to be more verbose]
-        -w secs         timeout for connects and final net reads
-        -z              zero-I/O mode [used for scanning]
-port numbers can be individual or ranges: m-n [inclusive]
-```
-
-L'idée ici est la suivante :
-
-- l'un de vous jouera le rôle d'un *serveur*
-- l'autre sera le *client* qui se connecte au *serveur*
-
-Précisément, on va dire à `netcat` d'*écouter sur un port*. Des ports, y'en a un nombre fixe (65536, on verra ça plus tard), et c'est juste le numéro de la porte à laquelle taper si on veut communiquer avec le serveur.
-
-Si le serveur écoute à la porte 20000, alors le client doit demander une connexion en tapant à la porte numéro 20000, simple non ?  
-
 Here we go :
 
-🌞 **sur le PC *serveur*** avec par exemple l'IP 192.168.1.1
-- `nc.exe -l -p 8888`
-  - "`netcat`, écoute sur le port numéro 8888 stp"
-- il se passe rien ? Normal, faut attendre qu'un client se connecte
+🌞 **sur le PC *serveur*** 
+```
+ping 10.10.10.210
 
-🌞 **sur le PC *client*** avec par exemple l'IP 192.168.1.2
+        Envoi d’une requête 'Ping'  10.10.10.210 avec 32 octets de données :
+        Réponse de 10.10.10.210 : octets=32 temps<1ms TTL=128
+        Réponse de 10.10.10.210 : octets=32 temps<1ms TTL=128
+        Réponse de 10.10.10.210 : octets=32 temps<1ms TTL=128
+        Réponse de 10.10.10.210 : octets=32 temps<1ms TTL=128
 
-- `nc.exe 192.168.1.1 8888`
-  - "`netcat`, connecte toi au port 8888 de la machine 192.168.1.1 stp"
-- une fois fait, vous pouvez taper des messages dans les deux sens
-- appelez-moi quand ça marche ! :)
-- si ça marche pas, essayez d'autres options de `netcat`
+        Statistiques Ping pour 10.10.10.210:
+        Paquets : envoyés = 4, reçus = 4, perdus = 0 (perte 0%),
+        Durée approximative des boucles en millisecondes :
+        Minimum = 0ms, Maximum = 0ms, Moyenne = 0ms
+        PS C:\Users\pc\Downloads\netcat-1.11> .\nc.exe -l -p 8888
+        mec
+        ftg
+        tg
+        bouffon
+        fdp
+        chu mort ca marche
+        c bi1
+```
+🌞 **sur le PC *client*** 
+```
+ping 10.10.10.213
 
+Envoi d’une requête 'Ping'  10.10.10.213 avec 32 octets de données :
+Réponse de 10.10.10.213 : octets=32 temps<1ms TTL=128
+Réponse de 10.10.10.213 : octets=32 temps<1ms TTL=128
+Réponse de 10.10.10.213 : octets=32 temps<1ms TTL=128
+Réponse de 10.10.10.213 : octets=32 temps<1ms TTL=128
+
+Statistiques Ping pour 10.10.10.213:
+    Paquets : envoyés = 4, reçus = 4, perdus = 0 (perte 0%),
+Durée approximative des boucles en millisecondes :
+    Minimum = 0ms, Maximum = 0ms, Moyenne = 0ms
+PS C:\Users\cedri\Desktop\netcat-1.11> ^C
+PS C:\Users\cedri\Desktop\netcat-1.11> .\nc.exe 10.10.10.213 8888
+ftg
+mec
+tg
+bouffon
+fdp
+chu mort ca marche
+c bi1
+```
 ---
 
 🌞 **Visualiser la connexion en cours**
-
-- sur tous les OS, il existe une commande permettant de voir les connexions en cours
-- ouvrez un deuxième terminal pendant une session `netcat`, et utilisez la commande correspondant à votre OS pour repérer la connexion `netcat` :
-
-```bash
-# Windows (dans un Powershell administrateur)
-$ netstat -a -n -b
-
-# Linux
-$ ss -atnp
-
-# MacOS
-$ netstat -a -n # je crois :D
 ```
-
+netstat -a -n -b
+ TCP    10.10.10.225:8888      10.10.10.210:54361     ESTABLISHED
+ [nc.exe]
+```
 🌞 **Pour aller un peu plus loin**
 
 - si vous faites un `netstat` sur le serveur AVANT que le client `netcat` se connecte, vous devriez observer que votre serveur `netcat` écoute sur toutes vos interfaces
-  - c'est à dire qu'on peut s'y connecter depuis la wifi par exemple :D
+```
+.\nc.exe -l -p 8888
+```
+```
+ netstat -a -n -b | select-string 8888
+
+  TCP    0.0.0.0:8888           0.0.0.0:0              LISTENING
+```
 - il est possible d'indiquer à `netcat` une interface précise sur laquelle écouter
   - par exemple, on écoute sur l'interface Ethernet, mais pas sur la WiFI
-
-```bash
-# Sur Windows/MacOS
-$ nc.exe -l -p PORT_NUMBER -s IP_ADDRESS
-# Par exemple
-$ nc.exe -l -p 9999 -s 192.168.1.37
 ```
+.\nc.exe -l -p 8888 -s 10.10.10.225
+```
+```
+netstat -a -n -b | select-string 8888
+
+  TCP    10.10.10.225:8888      0.0.0.0:0              LISTENING
+  ```
+
 
 ## 6. Firewall
 
