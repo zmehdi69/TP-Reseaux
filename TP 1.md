@@ -204,121 +204,91 @@ netstat -a -n -b | select-string 8888
   ```
 
 
-## 6. Firewall
+### 6. Firewall
+#### 🌞 Activez et configurez votre firewall
 
-Toujours par 2.
+![](https://i.imgur.com/XNnmoOO.png)
 
-Le but est de configurer votre firewall plutôt que de le désactiver
 
-🌞 **Activez et configurez votre firewall**
+## III. Manipulations d'autres outils/protocoles côté client
+### 1. DHCP
+#### 🌞Exploration du DHCP, depuis votre PC
+```
+PS C:\Users\alanw> ipconfig /all
 
-- autoriser les `ping`
-  - configurer le firewall de votre OS pour accepter le `ping`
-  - aidez vous d'internet
-  - on rentrera dans l'explication dans un prochain cours mais sachez que `ping` envoie un message *ICMP de type 8* (demande d'ECHO) et reçoit un message *ICMP de type 0* (réponse d'écho) en retour
-- autoriser le traffic sur le port qu'utilise `nc`
-  - on parle bien d'ouverture de **port** TCP et/ou UDP
-  - on ne parle **PAS** d'autoriser le programme `nc`
-  - choisissez arbitrairement un port entre 1024 et 20000
-  - vous utiliserez ce port pour communiquer avec `netcat` par groupe de 2 toujours
-  - le firewall du *PC serveur* devra avoir un firewall activé et un `netcat` qui fonctionne
-  
-# III. Manipulations d'autres outils/protocoles côté client
+Carte réseau sans fil Wi-Fi :
 
-## 1. DHCP
+   Suffixe DNS propre à la connexion. . . :
+   Description. . . . . . . . . . . . . . : Killer(R) Wi-Fi 6 AX1650i 160MHz Wireless Network Adapter (201NGW)
+   Adresse physique . . . . . . . . . . . : 4C-03-4F-E9-73-F7
+   DHCP activé. . . . . . . . . . . . . . : Oui <---- 
+   Configuration automatique activée. . . : Oui
+   Adresse IPv6 de liaison locale. . . . .: fe80::b980:3214:57b0:7a1d%6(préféré)
+   Adresse IPv4. . . . . . . . . . . . . .: 10.33.16.192(préféré)
+   Masque de sous-réseau. . . . . . . . . : 255.255.252.0
+   Bail obtenu. . . . . . . . . . . . . . : mercredi 5 octobre 2022 09:05:38 <----------
+   Bail expirant. . . . . . . . . . . . . : jeudi 6 octobre 2022 09:05:38 <----------
+   Passerelle par défaut. . . . . . . . . : 10.33.19.254
+   Serveur DHCP . . . . . . . . . . . . . : 10.33.19.254 <----------
+   IAID DHCPv6 . . . . . . . . . . . : 88867663
+   DUID de client DHCPv6. . . . . . . . : 00-01-00-01-29-C3-B8-56-08-8F-C3-51-69-8E
+```
+#### 🌞 Trouver l'adresse IP du serveur DNS que connaît votre ordinateur
 
-Bon ok vous savez définir des IPs à la main. Mais pour être dans le réseau YNOV, vous l'avez jamais fait.  
+```
+PS C:\Users\alanw> ipconfig /all
 
-C'est le **serveur DHCP** d'YNOV qui vous a donné une IP.
+   Serveurs DNS. . .  . . . . . . . . . . : 8.8.8.8
+                                       8.8.4.4
+                                       1.1.1.1
+```
+#### 🌞 Utiliser, en ligne de commande l'outil nslookup (Windows, MacOS) ou dig (GNU/Linux, MacOS) pour faire des requêtes DNS à la main
+```
+PS C:\Users\alanw> nslookup google.com
+Serveur :   dns.google
+Address:  8.8.8.8  <---- requête à cette adresse
 
-Une fois que le serveur DHCP vous a donné une IP, vous enregistrer un fichier appelé *bail DHCP* qui contient, entre autres :
+Réponse ne faisant pas autorité :
+Nom :    google.com
+Addresses:  2a00:1450:4007:819::200e
+          142.250.178.142
+```
+```
+PS C:\Users\alanw> nslookup ynov.com
+Serveur :   dns.google
+Address:  8.8.8.8 <---- requête à cette adresse
+Réponse ne faisant pas autorité :
+Nom :    ynov.com
+Addresses:  2606:4700:20::681a:ae9
+          2606:4700:20::681a:be9
+          2606:4700:20::ac43:4ae2
+          172.67.74.226
+          104.26.11.233
+          104.26.10.233
+```
+Les deux utilises le même DNS, celui de google.
 
-- l'IP qu'on vous a donné
-- le réseau dans lequel cette IP est valable
+```
+PS C:\Users\alanw> nslookup.exe 231.34.113.12
+Serveur :   dns.google
+Address:  8.8.8.8
 
-🌞**Exploration du DHCP, depuis votre PC**
+*** dns.google ne parvient pas à trouver 231.34.113.12 : Non-existent domain
 
-- afficher l'adresse IP du serveur DHCP du réseau WiFi YNOV
-- cette adresse a une durée de vie limitée. C'est le principe du ***bail DHCP*** (ou *DHCP lease*). Trouver la date d'expiration de votre bail DHCP
-- vous pouvez vous renseigner un peu sur le fonctionnement de DHCP dans les grandes lignes. On aura un cours là dessus :)
+PS C:\Users\alanw> nslookup.exe 78.34.2.17
+Serveur :   dns.google
+Address:  8.8.8.8
 
-> Chez vous, c'est votre box qui fait serveur DHCP et qui vous donne une IP quand vous le demandez.
+Nom :    cable-78-34-2-17.nc.de <---- Domaine
+Address:  78.34.2.17
 
-## 2. DNS
-
-Le protocole DNS permet la résolution de noms de domaine vers des adresses IP. Ce protocole permet d'aller sur `google.com` plutôt que de devoir connaître et utiliser l'adresse IP du serveur de Google.  
-
-Un **serveur DNS** est un serveur à qui l'on peut poser des questions (= effectuer des requêtes) sur un nom de domaine comme `google.com`, afin d'obtenir les adresses IP liées au nom de domaine.  
-
-Si votre navigateur fonctionne "normalement" (il vous permet d'aller sur `google.com` par exemple) alors votre ordinateur connaît forcément l'adresse d'un serveur DNS. Et quand vous naviguez sur internet, il effectue toutes les requêtes DNS à votre place, de façon automatique.
-
-🌞** Trouver l'adresse IP du serveur DNS que connaît votre ordinateur**
-
-🌞 Utiliser, en ligne de commande l'outil `nslookup` (Windows, MacOS) ou `dig` (GNU/Linux, MacOS) pour faire des requêtes DNS à la main
-
-- faites un *lookup* (*lookup* = "dis moi à quelle IP se trouve tel nom de domaine")
-  - pour `google.com`
-  - pour `ynov.com`
-  - interpréter les résultats de ces commandes
-- déterminer l'adresse IP du serveur à qui vous venez d'effectuer ces requêtes
-- faites un *reverse lookup* (= "dis moi si tu connais un nom de domaine pour telle IP")
-  - pour l'adresse `78.73.21.21`
-  - pour l'adresse `22.146.54.58`
-  - interpréter les résultats
-  - *si vous vous demandez, j'ai pris des adresses random :)*
-
-# IV. Wireshark
-
-**Wireshark est un outil qui permet de visualiser toutes les trames qui sortent et entrent d'une carte réseau.**
-
-On appelle ça un **sniffer**, ou **analyseur de trames.**
-
-![Wireshark](./pics/wireshark.jpg)
-
-Il peut :
-
-- enregistrer le trafic réseau, pour l'analyser plus tard
-- afficher le trafic réseau en temps réel
-
-**On peut TOUT voir.**
-
-Un peu austère aux premiers abords, une manipulation très basique permet d'avoir une très bonne compréhension de ce qu'il se passe réellement.
-
-➜ **[Téléchargez l'outil Wireshark](https://www.wireshark.org/).**
-
-🌞 Utilisez le pour observer les trames qui circulent entre vos deux carte Ethernet. Mettez en évidence :
-
-- un `ping` entre vous et votre passerelle
-- un `netcat` entre vous et votre mate, branché en RJ45
-- une requête DNS. Identifiez dans la capture le serveur DNS à qui vous posez la question.
-- prenez moi des screens des trames en question
-- on va prendre l'habitude d'utiliser Wireshark souvent dans les cours, pour visualiser ce qu'il se passe
-
-# Bilan
-
-**Vu pendant le TP :**
-
-- visualisation de vos interfaces réseau (en GUI et en CLI)
-- extraction des informations IP
-  - adresse IP et masque
-  - calcul autour de IP : adresse de réseau, etc.
-- connaissances autour de/aperçu de :
-  - un outil de diagnostic simple : `ping`
-  - un outil de scan réseau : `nmap`
-  - un outil qui permet d'établir des connexions "simples" (on y reviendra) : `netcat`
-  - un outil pour faire des requêtes DNS : `nslookup` ou `dig`
-  - un outil d'analyse de trafic : `wireshark`
-- manipulation simple de vos firewalls
-
-**Conclusion :**
-
-- Pour permettre à un ordinateur d'être connecté en réseau, il lui faut **une liaison physique** (par câble ou par *WiFi*).  
-- Pour réceptionner ce lien physique, l'ordinateur a besoin d'**une carte réseau**. La carte réseau porte une adresse MAC  
-- **Pour être membre d'un réseau particulier, une carte réseau peut porter une adresse IP.**
-Si deux ordinateurs reliés physiquement possèdent une adresse IP dans le même réseau, alors ils peuvent communiquer.  
-- **Un ordintateur qui possède plusieurs cartes réseau** peut réceptionner du trafic sur l'une d'entre elles, et le balancer sur l'autre, servant ainsi de "pivot". Cet ordinateur **est appelé routeur**.
-- Il existe dans la plupart des réseaux, certains équipements ayant un rôle particulier :
-  - un équipement appelé *passerelle*. C'est un routeur, et il nous permet de sortir du réseau actuel, pour en joindre un autre, comme Internet par exemple
-  - un équipement qui agit comme **serveur DNS** : il nous permet de connaître les IP derrière des noms de domaine
-  - un équipement qui agit comme **serveur DHCP** : il donne automatiquement des IP aux clients qui rejoigne le réseau
-  - **chez vous, c'est votre Box qui fait les trois :)**
+```
+Ici seulement une des deux adresses existes sur la première on voit que le premier n'a pas de domaine, `231.34.113.12 ` n'est donc pas présent dans le DNS de google.
+## IV. Wireshark
+### 1. Intro Wireshark
+#### 🌞 Utilisez le pour observer les trames qui circulent entre vos deux carte Ethernet. Mettez en évidence : 
+![](https://i.imgur.com/9Eef9Jf.png)
+![](https://i.imgur.com/NCGT1TW.png)
+![](https://i.imgur.com/9v8O7xz.png)
+#### 🌞 Wireshark it
+Notre PC se connecte à l'adresse 77.136.192.79 et au port 443.
