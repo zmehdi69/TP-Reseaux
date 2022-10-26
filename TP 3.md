@@ -43,14 +43,37 @@ ip a
 ### 2. Analyse de trames
 
 🌞**Analyse de trames**
-
-- utilisez la commande `tcpdump` pour réaliser une capture de trame
-- videz vos tables ARP, sur les deux machines, puis effectuez un `ping`
+```
+sudo tcpdump -i enp0s8 -w capturetrame.pcap
+```
+```
+sudo ip -s -s neigh flush all
+[sudo] password for zmehdi:
+10.3.1.12 dev enp0s8 lladdr 08:00:27:11:ec:34 used 781/780/761 probes 1 STALE
+10.3.1.1 dev enp0s8 lladdr 0a:00:27:00:00:04 ref 1 used 6/0/6 probes 0 REACHABLE
+```
+```
+sudo ip -s -s neigh flush all
+[sudo] password for zmehdi:
+10.3.1.11 dev enp0s8 lladdr 08:00:27:ce:b5:ed used 762/762/724 probes 4 STALE
+10.3.1.1 dev enp0s8 lladdr 0a:00:27:00:00:04 ref 1 used 7/0/7 probes 0 REACHABLE
+```
+```
+ ping 10.3.1.11
+PING 10.3.1.11 (10.3.1.11) 56(84) bytes of data.
+64 bytes from 10.3.1.11: icmp_seq=1 ttl=64 time=0.711 ms
+64 bytes from 10.3.1.11: icmp_seq=2 ttl=64 time=0.809 ms
+64 bytes from 10.3.1.11: icmp_seq=3 ttl=64 time=0.726 ms
+64 bytes from 10.3.1.11: icmp_seq=4 ttl=64 time=0.807 ms
+64 bytes from 10.3.1.11: icmp_seq=5 ttl=64 time=0.751 ms
+^C
+--- 10.3.1.11 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 4100ms
+```
 
 🦈 **Capture réseau `tp3_arp.pcapng`** qui contient un ARP request et un ARP reply
 
-
-> **Si vous ne savez pas comment récupérer votre fichier `.pcapng`** sur votre hôte afin de l'ouvrir dans Wireshark, et me le livrer en rendu, demandez-moi.
+[ma capture de trame arp](tp3_arp.pcap)
 
 ## II. Routage
 
@@ -75,25 +98,68 @@ Vous aurez besoin de 3 VMs pour cette partie. **Réutilisez les deux VMs précé
 ### 1. Mise en place du routage
 
 🌞**Activer le routage sur le noeud `router`**
-
-> Cette étape est nécessaire car Rocky Linux c'est pas un OS dédié au routage par défaut. Ce n'est bien évidemment une opération qui n'est pas nécessaire sur un équipement routeur dédié comme du matériel Cisco.
-
+```
+ sudo firewall-cmd --list-all
+public (active)
+  target: default
+  icmp-block-inversion: no
+  interfaces: enp0s8 enp0s9
+  sources:
+  services: cockpit dhcpv6-client ssh
+  ports:
+  protocols:
+  forward: yes
+  masquerade: yes
+  forward-ports:
+  source-ports:
+  icmp-blocks:
+  rich rules:
+[zmehdi@localhost ~]$ sudo firewall-cmd --get-active-zone
+public
+  interfaces: enp0s8 enp0s9
+[zmehdi@localhost ~]$ sudo firewall-cmd --add-masquerade --zone=public
+Warning: ALREADY_ENABLED: masquerade already enabled in 'public'
+success
+[zmehdi@localhost ~]$ sudo firewall-cmd --add-masquerade --zone=public --permanent
+Warning: ALREADY_ENABLED: masquerade
+success
+```
 🌞**Ajouter les routes statiques nécessaires pour que `john` et `marcel` puissent se `ping`**
-
-- il faut taper une commande `ip route add` pour cela, voir mémo
-- il faut ajouter une seule route des deux côtés
-- une fois les routes en place, vérifiez avec un `ping` que les deux machines peuvent se joindre
-
-![THE SIZE](./pics/thesize.png)
-
+```
+ip r s
+10.3.1.0/24 dev enp0s8 proto kernel scope link src 10.3.1.11 metric 100
+10.3.2.0/24 via 10.3.1.254 dev enp0s8 proto static metric 100
+```
+```
+ip r s
+10.3.1.0/24 via 10.3.2.254 dev enp0s8 proto static metric 100
+10.3.2.0/24 dev enp0s8 proto kernel scope link src 10.3.2.12 metric 100
+```
+```
+ ping 10.3.1.11
+PING 10.3.1.11 (10.3.1.11) 56(84) bytes of data.
+64 bytes from 10.3.1.11: icmp_seq=1 ttl=63 time=0.616 ms
+64 bytes from 10.3.1.11: icmp_seq=2 ttl=63 time=1.74 ms
+64 bytes from 10.3.1.11: icmp_seq=3 ttl=63 time=1.64 ms
+64 bytes from 10.3.1.11: icmp_seq=4 ttl=63 time=1.72 ms
+```
+```
+ ping 10.3.2.12
+PING 10.3.2.12 (10.3.2.12) 56(84) bytes of data.
+64 bytes from 10.3.2.12: icmp_seq=1 ttl=63 time=0.765 ms
+64 bytes from 10.3.2.12: icmp_seq=2 ttl=63 time=1.64 ms
+64 bytes from 10.3.2.12: icmp_seq=3 ttl=63 time=1.26 ms
+64 bytes from 10.3.2.12: icmp_seq=4 ttl=63 time=1.02 ms
+```
 ### 2. Analyse de trames
 
 🌞**Analyse des échanges ARP**
 
 - videz les tables ARP des trois noeuds
 - effectuez un `ping` de `john` vers `marcel`
-- regardez les tables ARP des trois noeuds
-- essayez de déduire un peu les échanges ARP qui ont eu lieu
+  - **le `tcpdump` doit être lancé sur la machine `john`**
+- essayez de déduire un les échanges ARP qui ont eu lieu
+  - en regardant la capture et/ou les tables ARP de tout le monde
 - répétez l'opération précédente (vider les tables, puis `ping`), en lançant `tcpdump` sur `marcel`
 - **écrivez, dans l'ordre, les échanges ARP qui ont eu lieu, puis le ping et le pong, je veux TOUTES les trames** utiles pour l'échange
 
@@ -107,7 +173,7 @@ Par exemple (copiez-collez ce tableau ce sera le plus simple) :
 | ?     | Ping        | ?         | ?                       | ?              | ?                          |
 | ?     | Pong        | ?         | ?                       | ?              | ?                          |
 
-> Vous pourriez, par curiosité, lancer la capture sur `john` aussi, pour voir l'échange qu'il a effectué de son côté.
+> Vous pourriez, par curiosité, lancer la capture sur `marcel` aussi, pour voir l'échange qu'il a effectué de son côté.
 
 🦈 **Capture réseau `tp3_routage_marcel.pcapng`**
 
@@ -140,12 +206,12 @@ Par exemple (copiez-collez ce tableau ce sera le plus simple) :
 
 On reprend la config précédente, et on ajoutera à la fin de cette partie une 4ème machine pour effectuer des tests.
 
-| Machine  | `10.3.1.0/24`              | `10.3.2.0/24` |
-|----------|----------------------------|---------------|
-| `router` | `10.3.1.254`               | `10.3.2.254`  |
-| `john`   | `10.3.1.11`                | no            |
-| `bob`    | oui mais pas d'IP statique | no            |
-| `marcel` | no                         | `10.3.2.12`   |
+| Machine  | `10.3.1.0/24`      | `10.3.2.0/24` |
+|----------|--------------------|---------------|
+| `router` | `10.3.1.254`       | `10.3.2.254`  |
+| `john`   | `10.3.1.11`        | no            |
+| `bob`    | PAS POUR LE MOMENT | no            |
+| `marcel` | no                 | `10.3.2.12`   |
 
 ```schema
    john               router              marcel
@@ -167,8 +233,8 @@ On reprend la config précédente, et on ajoutera à la fin de cette partie une 
 - installation du serveur sur `john`
 - créer une machine `bob`
 - faites lui récupérer une IP en DHCP à l'aide de votre serveur
+  - utilisez le mémo toujours, section "Définir une IP dynamique (DHCP)"
 
-> Il est possible d'utilise la commande `dhclient` pour forcer à la main, depuis la ligne de commande, la demande d'une IP en DHCP, ou renouveler complètement l'échange DHCP (voir `dhclient -h` puis call me et/ou Google si besoin d'aide).
 
 🌞**Améliorer la configuration du DHCP**
 
@@ -193,5 +259,9 @@ On reprend la config précédente, et on ajoutera à la fin de cette partie une 
 - lancer une capture à l'aide de `tcpdump` afin de capturer un échange DHCP
 - demander une nouvelle IP afin de générer un échange DHCP
 - exportez le fichier `.pcapng`
+- repérez, dans les trames DHCP observées dans Wireshark, les infos que votre serveur a fourni au client
+  - l'IP fournie au client
+  - l'adresse IP de la passerelle
+  - l'adresse du serveur DNS que vous proposez au client
 
 🦈 **Capture réseau `tp3_dhcp.pcapng`**
