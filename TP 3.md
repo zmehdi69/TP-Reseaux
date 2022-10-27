@@ -154,28 +154,30 @@ PING 10.3.2.12 (10.3.2.12) 56(84) bytes of data.
 ### 2. Analyse de trames
 
 🌞**Analyse des échanges ARP**
-
-- videz les tables ARP des trois noeuds
-- effectuez un `ping` de `john` vers `marcel`
-  - **le `tcpdump` doit être lancé sur la machine `john`**
-- essayez de déduire un les échanges ARP qui ont eu lieu
-  - en regardant la capture et/ou les tables ARP de tout le monde
-- répétez l'opération précédente (vider les tables, puis `ping`), en lançant `tcpdump` sur `marcel`
-- **écrivez, dans l'ordre, les échanges ARP qui ont eu lieu, puis le ping et le pong, je veux TOUTES les trames** utiles pour l'échange
-
-Par exemple (copiez-collez ce tableau ce sera le plus simple) :
-
+```
+ip -s n s
+10.3.1.10 dev enp0s8 lladdr 0a:00:27:00:00:03 ref 1 used 0/0/0 probes 4 REACHABLE
+10.3.1.254 dev enp0s8 lladdr 08:00:27:3a:d2:16 used 120/120/104 probes 4 STALE
+```
+```
+ip -s n s
+10.3.2.254 dev enp0s8 lladdr 08:00:27:a2:a0:f7 used 202/200/182 probes 1 STALE
+10.3.2.10 dev enp0s8 lladdr 0a:00:27:00:00:04 ref 1 used 2/2/4 probes 4 DELAY
+```
+```
+ip -s n s
+10.3.2.12 dev enp0s9 lladdr 08:00:27:e8:fc:9f used 138/138/96 probes 4 STALE
+10.3.1.11 dev enp0s8 lladdr 08:00:27:93:6c:7d used 135/133/116 probes 1 STALE
+10.3.1.10 dev enp0s8 lladdr 0a:00:27:00:00:03 ref 1 used 0/0/3 probes 4 DELAY
+```
 | ordre | type trame  | IP source | MAC source              | IP destination | MAC destination            |
 |-------|-------------|-----------|-------------------------|----------------|----------------------------|
-| 1     | Requête ARP | x         | `marcel` `AA:BB:CC:DD:EE` | x              | Broadcast `FF:FF:FF:FF:FF` |
-| 2     | Réponse ARP | x         | ?                       | x              | `marcel` `AA:BB:CC:DD:EE`    |
-| ...   | ...         | ...       | ...                     |                |                            |
-| ?     | Ping        | ?         | ?                       | ?              | ?                          |
-| ?     | Pong        | ?         | ?                       | ?              | ?                          |
+| 1     | Requête ARP | x         | `marcel` `08:00:27:93:6c:7d` | x              | Broadcast `ff:ff:ff:ff:ff` |
+| 2     | Réponse ARP | x         | `serveur` `08:00:27:3a:d2:16`                       | x              | `marcel` `08:00:27:93:6c:7d`    |
+| 3     | Ping        | `10.3.1.11`         | `08:00:27:93:6c:7d`                       | `10.3.2.12`              | `08:00:27:3a:d2:16`                          |
+| 4     | Pong        | `10.3.2.12`         | `08:00:27:3a:d2:16`                       | `10.3.1.11`              | `08:00:27:93:6c:7d`                          |
 
-> Vous pourriez, par curiosité, lancer la capture sur `marcel` aussi, pour voir l'échange qu'il a effectué de son côté.
-
-🦈 **Capture réseau `tp3_routage_marcel.pcapng`**
+[source](./tp3_routage_marcel.pcap)
 
 ### 3. Accès internet
 
