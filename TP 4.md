@@ -92,13 +92,6 @@ Youtube (UDP) :
 
 🌞 **Demandez l'avis à votre OS**
 
-- votre OS est responsable de l'ouverture des ports, et de placer un programme en "écoute" sur un port
-- il est aussi responsable de l'ouverture d'un port quand une application demande à se connecter à distance vers un serveur
-- bref il voit tout quoi
-- utilisez la commande adaptée à votre OS pour repérer, dans la liste de toutes les connexions réseau établies, la connexion que vous voyez dans Wireshark, pour chacune des 5 applications
-
-**Il faudra ajouter des options adaptées aux commandes pour y voir clair. Pour rappel, vous cherchez des connexions TCP ou UDP.**
-
 Netflix :
 ```
 PS C:\Users\Zahreddine Mehdi> netstat -n
